@@ -122,7 +122,12 @@ class Main extends React.Component {
     if (this.state.selected !== this.state.wordData.word) {
       alert("Incorrect!");
     } else {
-      alert("Correct!");
+      const wordData = pickRandomWordData(sentences);
+      this.setState({
+        selected: "",
+        wordData,
+        choices: this.choicesCreator(wordData)
+      });
     }
   }
 
@@ -135,6 +140,7 @@ class Main extends React.Component {
           data={this.state.wordData}
         />
         <MultipleChoice
+          selectedWord={this.state.selected}
           choices={this.state.choices}
           changeHandler={this.changeHandler}
         />
@@ -150,17 +156,16 @@ class Main extends React.Component {
 class Sentence extends React.Component {
   constructor(props) {
     super(props);
-    const data = this.props.data;
-    this.sentencePieces = splitSentence(data.sentence, data.word);
   }
 
   render() {
-
+    const data = this.props.data;
+    const sentencePieces = splitSentence(data.sentence, data.word);
     return (
       <p>
-        {this.sentencePieces[0]}
+        {sentencePieces[0]}
         <input type="text" value={this.props.selectedValue}/>
-        {this.sentencePieces[1]}
+        {sentencePieces[1]}
       </p>
     );
   }
@@ -168,12 +173,16 @@ class Sentence extends React.Component {
 
   // Defines the multiple choice selector on bottom of screen
 const MultipleChoice = props => {
-  const choices = props.choices.map(choice => (
-    <MultipleChoiceItem
-      choice={choice}
-      changeHandler={props.changeHandler}
-    />
-  ));
+  const choices = props.choices.map(choice => {
+    const selected = props.selectedWord === choice;
+    return (
+      <MultipleChoiceItem
+        choice={choice}
+        changeHandler={props.changeHandler}
+        selected={selected}
+      />
+    )
+  });
   return (
     <form className="multiple-choice">
       {choices}
@@ -195,6 +204,7 @@ const MultipleChoiceItem = props => {
         name="choice"
         value={props.choice}
         onChange={props.changeHandler}
+        checked={props.selected ? "checked" : ""}
       />
       <label>{props.choice}</label><br/>
     </div>
