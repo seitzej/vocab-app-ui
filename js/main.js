@@ -40,8 +40,42 @@ function pickRandom(array) {
   var idx = Math.floor(Math.random() * array.length);
   return array[idx];
 }
+
+function randIdx(array) {
+  var idx = Math.floor(Math.random() * array.length);
+  return idx;
+}
+
 function pickThree(array) {
-  return [pickRandom(array), pickRandom(array), pickRandom(array)];
+  var indexes = [];
+  while (indexes.length !== 3) {
+    var idx = Math.floor(Math.random() * array.length);
+    if (!(idx in indexes)) {
+      indexes.push(idx);
+    }
+  }
+
+  return indexes.map(i => array[i]);
+}
+
+
+function pickRandomWordData(array) {
+  const withAllSentences = pickRandom(array);
+  // this seems too verbose
+  const withOneSentence = {
+    word: withAllSentences.word,
+    sentence: pickRandom(withAllSentences.sentences)
+  }
+
+  return withOneSentence;
+}
+
+function splitSentence(sentence, word) {
+  const wordIdx = sentence.indexOf(word);
+  const firstHalf = sentence.slice(0,wordIdx);
+  const secondHalf = sentence.slice(wordIdx + word.length);
+
+  return [firstHalf, secondHalf];
 }
 
 // App entrypoint
@@ -57,19 +91,39 @@ const App = () => {
 class Main extends React.Component {
   constructor(props) {
     super(props);
+    const wordData = pickRandomWordData(sentences);
+
     this.state = {
-      selected: ""
-    }
-    this.choices = pickThree(sentences).map(d => d.word);
+      selected: "",
+      wordData,
+      choices: this.choicesCreator(wordData)
+    };
 
     this.changeHandler = this.changeHandler.bind(this);
+    this.submitHandler = this.submitHandler.bind(this);
+  }
+
+  choicesCreator(wordData) {
+    const words = sentences
+      .filter(s => s.word !== wordData.word)
+      .map(s => s.word);
+
+    return [wordData.word].concat(pickThree(words));
+
   }
 
   changeHandler(e) {
-    console.log("Change", e.target.value);
     this.setState({
       selected: e.target.value
     });
+  }
+
+  submitHandler() {
+    if (this.state.selected !== this.state.wordData.word) {
+      alert("Incorrect!");
+    } else {
+      alert("Correct!");
+    }
   }
 
   render() {
@@ -78,35 +132,28 @@ class Main extends React.Component {
       <main>
         <Sentence
           selectedValue={this.state.selected}
-          data={sentences[0]}
+          data={this.state.wordData}
         />
         <MultipleChoice
-          choices={this.choices}
+          choices={this.state.choices}
           changeHandler={this.changeHandler}
         />
+        <button onClick={this.submitHandler}>Submit</button>
       </main>
     )
   }
 }
 
-function splitSentence(sentence, word) {
-  const wordIdx = sentence.indexOf(word);
-  const firstHalf = sentence.slice(0,wordIdx);
-  const secondHalf = sentence.slice(wordIdx + word.length);
-
-  return [firstHalf, secondHalf];
-}
 
 // Defines the Sentence with blank on top of screen
 
 class Sentence extends React.Component {
   constructor(props) {
     super(props);
-    this.sentence = pickRandom(props.data.sentences);
-    this.sentencePieces = splitSentence(this.sentence, props.data.word);
-    console.debug("Sentence:", this.sentence);
-    console.debug("Sentence Pieces:", this.sentencePieces);
+    const data = this.props.data;
+    this.sentencePieces = splitSentence(data.sentence, data.word);
   }
+
   render() {
 
     return (
@@ -140,16 +187,16 @@ MultipleChoice.propTypes = {
 }
 
 
-const MultipleChoiceItem = ({ choice, changeHandler }) => {
+const MultipleChoiceItem = props => {
   return (
     <div className="multiple-choice__item">
       <input
         type="radio"
         name="choice"
-        value={choice}
-        onChange={changeHandler}
+        value={props.choice}
+        onChange={props.changeHandler}
       />
-      <label>{choice}</label><br/>
+      <label>{props.choice}</label><br/>
     </div>
   )
 };
