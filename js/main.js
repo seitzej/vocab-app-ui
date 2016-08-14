@@ -149,7 +149,7 @@ const MultipleChoiceItem = ({ choice, changeHandler }) => {
         value={choice}
         onChange={changeHandler}
       />
-      {choice}<br/>
+      <label>{choice}</label><br/>
     </div>
   )
 };
